@@ -3,32 +3,46 @@ import { NextResponse } from "next/server";
 import { cleanupExpiredReservations } from "@/lib/cleanupExpiredReservations";
 
 export async function GET() {
+
     await cleanupExpiredReservations();
 
-    const inventory = await prisma.inventory.findMany({
-        include: {
-            product: true,
-            warehouse: true,
-        },
-    });
+    const inventory =
+        await prisma.inventory.findMany({
+            include: {
+                product: true,
+                warehouse: true,
+            },
+        });
 
-    const formatted = inventory.map((item: any) => ({
-        inventoryId: item.id,
+    const formatted =
+        inventory.map((item: any) => ({
 
-        productId: item.product.id,
-        productName: item.product.name,
+            inventoryId: item.id,
 
-        warehouseId: item.warehouse.id,
-        warehouseName: item.warehouse.name,
+            productId:
+                item.product.id,
 
-        totalQuantity: item.totalQuantity,
+            productName:
+                item.product.name,
 
-        reservedQuantity: item.reservedQuantity,
+            warehouseId:
+                item.warehouse.id,
 
-        availableQuantity:
-            item.totalQuantity -
-            item.reservedQuantity,
-    }));
+            warehouseName:
+                item.warehouse.name,
 
-    return NextResponse.json(formatted);
+            totalQuantity:
+                item.totalQuantity,
+
+            reservedQuantity:
+                item.reservedQuantity,
+
+            availableQuantity:
+                item.totalQuantity -
+                item.reservedQuantity,
+        }));
+
+    return NextResponse.json(
+        formatted
+    );
 }
