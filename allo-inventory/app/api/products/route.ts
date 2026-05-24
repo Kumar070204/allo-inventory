@@ -12,7 +12,7 @@ export async function GET() {
         },
     });
 
-    const formatted = inventory.map((item) => ({
+    const formatted = inventory.map((item: any) => ({
         inventoryId: item.id,
 
         productId: item.product.id,
