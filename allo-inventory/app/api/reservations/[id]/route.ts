@@ -42,7 +42,7 @@ export async function GET(
             reservation
         );
 
-    } catch (error) {
+    } catch {
 
         return NextResponse.json(
             {

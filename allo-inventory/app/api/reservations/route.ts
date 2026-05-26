@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Inventory } from "@prisma/client";
 
 // validation schema
 
@@ -53,7 +54,7 @@ export async function POST(
                     // lock inventory row
 
                     const inventoryRows =
-                        await tx.$queryRaw<any[]>`
+                        await tx.$queryRaw<Inventory[]>`
 
               SELECT *
               FROM "Inventory"
@@ -71,16 +72,7 @@ export async function POST(
                     // inventory missing
 
                     if (!inventory) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Inventory not found",
-                            },
-                            {
-                                status: 404,
-                            }
-                        );
+                        throw new Error("NOT_FOUND");
                     }
 
                     // compute available stock
@@ -95,16 +87,7 @@ export async function POST(
                         availableQuantity <
                         quantity
                     ) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Not enough stock available",
-                            },
-                            {
-                                status: 409,
-                            }
-                        );
+                        throw new Error("INSUFFICIENT_STOCK");
                     }
 
                     // reserve stock
@@ -155,7 +138,7 @@ export async function POST(
             reservation
         );
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
         // zod validation errors
 
@@ -173,6 +156,32 @@ export async function POST(
                 },
                 {
                     status: 400,
+                }
+            );
+        }
+
+        const knownError = error as { message?: string };
+
+        if (knownError.message === "NOT_FOUND") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Inventory not found",
+                },
+                {
+                    status: 404,
+                }
+            );
+        }
+
+        if (knownError.message === "INSUFFICIENT_STOCK") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Not enough stock available",
+                },
+                {
+                    status: 409,
                 }
             );
         }

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Reservation } from "@prisma/client";
 
 // params validation
 
@@ -42,7 +43,7 @@ export async function POST(
                     // lock reservation row
 
                     const reservationRows =
-                        await tx.$queryRaw<any[]>`
+                        await tx.$queryRaw<Reservation[]>`
 
               SELECT *
               FROM "Reservation"
@@ -58,16 +59,7 @@ export async function POST(
                     // reservation missing
 
                     if (!reservation) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Reservation not found",
-                            },
-                            {
-                                status: 404,
-                            }
-                        );
+                        throw new Error("NOT_FOUND");
                     }
 
                     // already processed
@@ -76,16 +68,7 @@ export async function POST(
                         reservation.status !==
                         "PENDING"
                     ) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Reservation already processed",
-                            },
-                            {
-                                status: 409,
-                            }
-                        );
+                        throw new Error("ALREADY_PROCESSED");
                     }
 
                     // fetch inventory
@@ -102,16 +85,7 @@ export async function POST(
                     // inventory missing
 
                     if (!inventory) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Inventory missing",
-                            },
-                            {
-                                status: 404,
-                            }
-                        );
+                        throw new Error("INVENTORY_MISSING");
                     }
 
                     // safety check
@@ -120,16 +94,7 @@ export async function POST(
                         inventory.reservedQuantity <
                         reservation.quantity
                     ) {
-
-                        return NextResponse.json(
-                            {
-                                error:
-                                    "Reserved quantity corrupted",
-                            },
-                            {
-                                status: 500,
-                            }
-                        );
+                        throw new Error("CORRUPTED_STATE");
                     }
 
                     // restore reserved stock
@@ -173,7 +138,7 @@ export async function POST(
             result
         );
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
         // zod validation errors
 
@@ -191,6 +156,56 @@ export async function POST(
                 },
                 {
                     status: 400,
+                }
+            );
+        }
+
+        const knownError = error as { message?: string };
+
+        if (knownError.message === "NOT_FOUND") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Reservation not found",
+                },
+                {
+                    status: 404,
+                }
+            );
+        }
+
+        if (knownError.message === "ALREADY_PROCESSED") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Reservation already processed",
+                },
+                {
+                    status: 409,
+                }
+            );
+        }
+
+        if (knownError.message === "INVENTORY_MISSING") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Inventory missing",
+                },
+                {
+                    status: 404,
+                }
+            );
+        }
+
+        if (knownError.message === "CORRUPTED_STATE") {
+            return NextResponse.json(
+                {
+                    error:
+                        "Reserved quantity corrupted",
+                },
+                {
+                    status: 500,
                 }
             );
         }

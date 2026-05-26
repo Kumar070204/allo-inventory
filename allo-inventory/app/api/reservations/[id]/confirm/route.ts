@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { Reservation } from "@prisma/client";
 
 // validate params
 
@@ -42,7 +43,7 @@ export async function POST(
                     // lock reservation row
 
                     const reservationRows =
-                        await tx.$queryRaw<any[]>`
+                        await tx.$queryRaw<Reservation[]>`
 
               SELECT *
               FROM "Reservation"
@@ -165,7 +166,7 @@ export async function POST(
             result
         );
 
-    } catch (error: any) {
+    } catch (error: unknown) {
 
         // zod validation
 
@@ -184,10 +185,12 @@ export async function POST(
             );
         }
 
+        const knownError = error as { message?: string };
+
         // known errors
 
         if (
-            error.message ===
+            knownError.message ===
             "NOT_FOUND"
         ) {
 
@@ -203,7 +206,7 @@ export async function POST(
         }
 
         if (
-            error.message ===
+            knownError.message ===
             "ALREADY_PROCESSED"
         ) {
 
@@ -219,7 +222,7 @@ export async function POST(
         }
 
         if (
-            error.message ===
+            knownError.message ===
             "EXPIRED"
         ) {
 

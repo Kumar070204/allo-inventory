@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Reservation } from "@prisma/client";
 
 export async function cleanupExpiredReservations() {
 
@@ -27,7 +28,7 @@ export async function cleanupExpiredReservations() {
                 // lock reservation row
 
                 const reservationRows =
-                    await tx.$queryRaw<any[]>`
+                    await tx.$queryRaw<Reservation[]>`
 
             SELECT *
             FROM "Reservation"

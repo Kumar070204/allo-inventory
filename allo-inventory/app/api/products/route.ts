@@ -15,7 +15,7 @@ export async function GET() {
         });
 
     const formatted =
-        inventory.map((item: any) => ({
+        inventory.map((item) => ({
 
             inventoryId: item.id,
 
