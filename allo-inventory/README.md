@@ -6,10 +6,6 @@ The system allows users to reserve, confirm, and release inventory across multip
 
 ---
 
-## Live Demo
-
-[https://your-app.vercel.app](https://your-app.vercel.app)
-
 ## Repository
 
 [https://github.com/Kumar070204/allo-inventory](https://github.com/Kumar070204/allo-inventory)
